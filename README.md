@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/ModChain/edwards25519?status.svg)](https://godoc.org/github.com/ModChain/edwards25519)
+
 # edwards25519
 
 This is a merge of code found in the following paths:
