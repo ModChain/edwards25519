@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package ed25519
+package edwards25519
 
 import (
 	"bufio"
@@ -14,8 +14,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/ModChain/ed25519/edwards25519"
 )
 
 type zeroReader struct{}
@@ -30,7 +28,7 @@ func (zeroReader) Read(buf []byte) (int, error) {
 func TestUnmarshalMarshal(t *testing.T) {
 	pub, _, _ := GenerateKey(rand.Reader)
 
-	var A edwards25519.ExtendedGroupElement
+	var A ExtendedGroupElement
 	if !A.FromBytes(pub) {
 		t.Fatalf("ExtendedGroupElement.FromBytes failed")
 	}

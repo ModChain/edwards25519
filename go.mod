@@ -1,4 +1,4 @@
-module github.com/ModChain/ed25519
+module github.com/ModChain/edwards25519
 
 go 1.22.2
 

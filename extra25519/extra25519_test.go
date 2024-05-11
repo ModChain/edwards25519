@@ -9,12 +9,12 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/ModChain/ed25519"
+	"github.com/ModChain/edwards25519"
 	"golang.org/x/crypto/curve25519"
 )
 
 func TestCurve25519Conversion(t *testing.T) {
-	public, private, _ := ed25519.GenerateKey(rand.Reader)
+	public, private, _ := edwards25519.GenerateKey(rand.Reader)
 
 	var curve25519Public, curve25519Public2, curve25519Private [32]byte
 	PrivateKeyToCurve25519(&curve25519Private, private)

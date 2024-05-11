@@ -5,160 +5,11 @@
 package edwards25519
 
 import (
-	"bufio"
 	"bytes"
-	"compress/gzip"
-	"encoding/hex"
-	"errors"
-	"io"
 	"math/big"
 	"math/rand"
-	"os"
-	"strings"
 	"testing"
 )
-
-func TestGolden(t *testing.T) {
-	// sign.input.gz is a selection of test cases from
-	// https://ed25519.cr.yp.to/python/sign.input
-	testDataZ, err := os.Open("testdata/sign.input.gz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer testDataZ.Close()
-	testData, err := gzip.NewReader(testDataZ)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer testData.Close()
-
-	in := bufio.NewReaderSize(testData, 1<<12)
-	lineNo := 0
-	for {
-		lineNo++
-		lineBytes, err := in.ReadBytes(byte('\n'))
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			t.Fatalf("error reading test data: %s", err)
-		}
-
-		line := string(lineBytes)
-		parts := strings.Split(line, ":")
-		if len(parts) != 5 {
-			t.Fatalf("bad number of parts on line %d (want %v, got %v)", lineNo,
-				5, len(parts))
-		}
-
-		privBytes, _ := hex.DecodeString(parts[0])
-		privArray := copyBytes64(privBytes)
-
-		pubKeyBytes, _ := hex.DecodeString(parts[1])
-		pubArray := copyBytes(pubKeyBytes)
-		msg, _ := hex.DecodeString(parts[2])
-		sig, _ := hex.DecodeString(parts[3])
-		sigArray := copyBytes64(sig)
-		// The signatures in the test vectors also include the message
-		// at the end, but we just want R and S.
-		sig = sig[:SignatureSize]
-
-		if l := len(pubKeyBytes); l != PubKeyBytesLen {
-			t.Fatalf("bad public key length on line %d: got %d bytes", lineNo, l)
-		}
-
-		var priv [PrivKeyBytesLen]byte
-		copy(priv[:], privBytes)
-		copy(priv[32:], pubKeyBytes)
-
-		// Deserialize privkey and test functions.
-		privkeyS1, pubkeyS1 := PrivKeyFromSecret(priv[:32])
-		privkeyS2, pubkeyS2 := PrivKeyFromBytes(priv[:])
-		pkS1 := privkeyS1.SerializeSecret()
-		pkS2 := privkeyS2.SerializeSecret()
-		pubkS1 := pubkeyS1.Serialize()
-		pubkS2 := pubkeyS2.Serialize()
-		cmp := bytes.Equal(pkS1[:], pkS2[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(privArray[:], copyBytes64(pkS1)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(privArray[:], copyBytes64(pkS2)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(pubkS1[:], pubkS2[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(pubArray[:], copyBytes(pubkS1)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(pubArray[:], copyBytes(pubkS2)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		// Deserialize pubkey and test functions.
-		pubkeyP, err := ParsePubKey(pubKeyBytes)
-		if err != nil {
-			t.Fatalf("ParsePubKey: %v", err)
-		}
-
-		pubkP := pubkeyP.Serialize()
-		cmp = bytes.Equal(pubkS1[:], pubkP[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(pubkS2[:], pubkP[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		cmp = bytes.Equal(pubArray[:], copyBytes(pubkP)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		// Deserialize signature and test functions.
-		internalSig, err := ParseSignature(sig)
-		if err != nil {
-			t.Fatalf("ParseSignature failed: %v", err)
-		}
-		iSigSerialized := internalSig.Serialize()
-		cmp = bytes.Equal(sigArray[:], copyBytes64(iSigSerialized)[:])
-		if !cmp {
-			t.Fatalf("expected %v, got %v", true, cmp)
-		}
-
-		sig2r, sig2s, err := SignRS(privkeyS2, msg)
-		if err != nil {
-			t.Fatalf("Sign failed: %v", err)
-		}
-		sig2 := &Signature{sig2r, sig2s}
-		sig2B := sig2.Serialize()
-		if !bytes.Equal(sig, sig2B[:]) {
-			t.Errorf("different signature result on line %d: %x vs %x", lineNo,
-				sig, sig2B[:])
-		}
-
-		var pubKey [PubKeyBytesLen]byte
-		copy(pubKey[:], pubKeyBytes)
-		if !VerifyRS(pubkeyP, msg, sig2r, sig2s) {
-			t.Errorf("signature failed to verify on line %d", lineNo)
-		}
-	}
-}
 
 func randPrivScalarKeyList(i int) []*PrivateKey {
 	r := rand.New(rand.NewSource(54321))
@@ -360,7 +211,7 @@ func benchmarkSigning(b *testing.B) {
 	}
 }
 
-func BenchmarkSigning(b *testing.B) { benchmarkSigning(b) }
+func BenchmarkSigningRS(b *testing.B) { benchmarkSigning(b) }
 
 func benchmarkSigningNonStandard(b *testing.B) {
 	r := rand.New(rand.NewSource(54321))
@@ -469,4 +320,4 @@ func benchmarkVerification(b *testing.B) {
 	}
 }
 
-func BenchmarkVerification(b *testing.B) { benchmarkVerification(b) }
+func BenchmarkVerificationRS(b *testing.B) { benchmarkVerification(b) }
