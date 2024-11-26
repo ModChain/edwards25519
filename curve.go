@@ -340,6 +340,7 @@ func (curve *TwistedEdwardsCurve) initParam25519() {
 	// The prime modulus of the field.
 	// P = 2^255-19
 	curve.CurveParams = new(elliptic.CurveParams)
+	curve.CurveParams.Name = "ed25519"
 	curve.P = new(big.Int)
 	curve.P.SetBit(zero, 255, 1).Sub(curve.P, big.NewInt(19))
 
