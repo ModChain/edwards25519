@@ -71,19 +71,19 @@ var halfQMinus1Bytes = [32]byte{
 }
 
 // feBytesLess returns one if a <= b and zero otherwise.
-func feBytesLE(a, b *[32]byte) int32 {
-	equalSoFar := int32(-1)
-	greater := int32(0)
+func feBytesLE(a, b *[32]byte) int64 {
+	equalSoFar := int64(-1)
+	greater := int64(0)
 
 	for i := uint(31); i < 32; i-- {
-		x := int32(a[i])
-		y := int32(b[i])
+		x := int64(a[i])
+		y := int64(b[i])
 
-		greater = (^equalSoFar & greater) | (equalSoFar & ((x - y) >> 31))
-		equalSoFar = equalSoFar & (((x ^ y) - 1) >> 31)
+		greater = (^equalSoFar & greater) | (equalSoFar & ((x - y) >> 63))
+		equalSoFar = equalSoFar & (((x ^ y) - 1) >> 63)
 	}
 
-	return int32(^equalSoFar & 1 & greater)
+	return int64(^equalSoFar & 1 & greater)
 }
 
 // ScalarBaseMult computes a curve25519 public key from a private key and also
@@ -334,7 +334,7 @@ func RepresentativeToPublicKey(publicKey, representative *[32]byte) {
 	var eBytes [32]byte
 	edwards25519.FeToBytes(&eBytes, &e)
 	// eBytes[1] is either 0 (for e = 1) or 0xff (for e = -1)
-	eIsMinus1 := int32(eBytes[1]) & 1
+	eIsMinus1 := int64(eBytes[1]) & 1
 	var negV edwards25519.FieldElement
 	edwards25519.FeNeg(&negV, &v)
 	edwards25519.FeCMove(&v, &negV, eIsMinus1)

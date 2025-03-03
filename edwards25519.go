@@ -14,7 +14,7 @@ package edwards25519
 // t, entries t[0]...t[9], represents the integer t[0]+2^26 t[1]+2^51 t[2]+2^77
 // t[3]+2^102 t[4]+...+2^230 t[9].  Bounds on each t[i] vary depending on
 // context.
-type FieldElement [10]int32
+type FieldElement [10]int64
 
 var zeroFE FieldElement
 
@@ -61,7 +61,7 @@ func FeCopy(dst, src *FieldElement) {
 // replace (f,g) with (f,g) if b == 0.
 //
 // Preconditions: b in {0,1}.
-func FeCMove(f, g *FieldElement, b int32) {
+func FeCMove(f, g *FieldElement, b int64) {
 	b = -b
 	f[0] ^= b & (f[0] ^ g[0])
 	f[1] ^= b & (f[1] ^ g[1])
@@ -133,7 +133,7 @@ func FeFromBytes(dst *FieldElement, src *[32]byte) {
 //	Have q+2^(-255)x = 2^(-255)(h + 19 2^(-25) h9 + 2^(-1))
 //	so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q.
 func FeToBytes(s *[32]byte, h *FieldElement) {
-	var carry [10]int32
+	var carry [10]int64
 
 	q := (19*h[9] + (1 << 24)) >> 25
 	q = (h[0] + q) >> 26
@@ -227,7 +227,7 @@ func FeIsNegative(f *FieldElement) byte {
 	return s[0] & 1
 }
 
-func FeIsNonZero(f *FieldElement) int32 {
+func FeIsNonZero(f *FieldElement) int64 {
 	var s [32]byte
 	FeToBytes(&s, f)
 	var x uint8
@@ -237,7 +237,7 @@ func FeIsNonZero(f *FieldElement) int32 {
 	x |= x >> 4
 	x |= x >> 2
 	x |= x >> 1
-	return int32(x & 1)
+	return int64(x & 1)
 }
 
 // FeNeg sets h = -f
@@ -339,16 +339,16 @@ func FeCombine(h *FieldElement, h0, h1, h2, h3, h4, h5, h6, h7, h8, h9 int64) {
 	/* |h0| <= 2^25; from now on fits into int32 unchanged */
 	/* |h1| <= 1.01*2^24 */
 
-	h[0] = int32(h0)
-	h[1] = int32(h1)
-	h[2] = int32(h2)
-	h[3] = int32(h3)
-	h[4] = int32(h4)
-	h[5] = int32(h5)
-	h[6] = int32(h6)
-	h[7] = int32(h7)
-	h[8] = int32(h8)
-	h[9] = int32(h9)
+	h[0] = h0
+	h[1] = h1
+	h[2] = h2
+	h[3] = h3
+	h[4] = h4
+	h[5] = h5
+	h[6] = h6
+	h[7] = h7
+	h[8] = h8
+	h[9] = h9
 }
 
 // FeMul calculates h = f * g
@@ -944,30 +944,30 @@ func GeDoubleScalarMultVartime(r *ProjectiveGroupElement, a *[32]byte, A *Extend
 }
 
 // equal returns 1 if b == c and 0 otherwise.
-func equal(b, c int32) int32 {
-	x := uint32(b ^ c)
+func equal(b, c int64) int64 {
+	x := uint64(b ^ c)
 	x--
-	return int32(x >> 31)
+	return int64(x >> 63)
 }
 
 // negative returns 1 if b < 0 and 0 otherwise.
-func negative(b int32) int32 {
-	return (b >> 31) & 1
+func negative(b int64) int64 {
+	return (b >> 63) & 1
 }
 
-func PreComputedGroupElementCMove(t, u *PreComputedGroupElement, b int32) {
+func PreComputedGroupElementCMove(t, u *PreComputedGroupElement, b int64) {
 	FeCMove(&t.yPlusX, &u.yPlusX, b)
 	FeCMove(&t.yMinusX, &u.yMinusX, b)
 	FeCMove(&t.xy2d, &u.xy2d, b)
 }
 
-func selectPoint(t *PreComputedGroupElement, pos int32, b int32) {
+func selectPoint(t *PreComputedGroupElement, pos int64, b int64) {
 	var minusT PreComputedGroupElement
 	bNegative := negative(b)
 	bAbs := b - (((-bNegative) & b) << 1)
 
 	t.Zero()
-	for i := int32(0); i < 8; i++ {
+	for i := int64(0); i < 8; i++ {
 		PreComputedGroupElementCMove(t, &base[pos][i], equal(bAbs, i+1))
 	}
 	FeCopy(&minusT.yPlusX, &t.yMinusX)
@@ -1006,8 +1006,8 @@ func GeScalarMultBase(h *ExtendedGroupElement, a *[32]byte) {
 	h.Zero()
 	var t PreComputedGroupElement
 	var r CompletedGroupElement
-	for i := int32(1); i < 64; i += 2 {
-		selectPoint(&t, i/2, int32(e[i]))
+	for i := int64(1); i < 64; i += 2 {
+		selectPoint(&t, i/2, int64(e[i]))
 		geMixedAdd(&r, h, &t)
 		r.ToExtended(h)
 	}
@@ -1023,8 +1023,8 @@ func GeScalarMultBase(h *ExtendedGroupElement, a *[32]byte) {
 	s.Double(&r)
 	r.ToExtended(h)
 
-	for i := int32(0); i < 64; i += 2 {
-		selectPoint(&t, i/2, int32(e[i]))
+	for i := int64(0); i < 64; i += 2 {
+		selectPoint(&t, i/2, int64(e[i]))
 		geMixedAdd(&r, h, &t)
 		r.ToExtended(h)
 	}
