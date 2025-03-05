@@ -654,7 +654,7 @@ type CompletedGroupElement struct {
 }
 
 type PreComputedGroupElement struct {
-	yPlusX, yMinusX, xy2d FieldElement
+	YPlusX, YMinusX, XY2D FieldElement
 }
 
 type CachedGroupElement struct {
@@ -787,9 +787,9 @@ func (p *CompletedGroupElement) ToExtended(r *ExtendedGroupElement) {
 }
 
 func (p *PreComputedGroupElement) Zero() {
-	FeOne(&p.yPlusX)
-	FeOne(&p.yMinusX)
-	FeZero(&p.xy2d)
+	FeOne(&p.YPlusX)
+	FeOne(&p.YMinusX)
+	FeZero(&p.XY2D)
 }
 
 func geAdd(r *CompletedGroupElement, p *ExtendedGroupElement, q *CachedGroupElement) {
@@ -833,9 +833,9 @@ func geMixedAdd(r *CompletedGroupElement, p *ExtendedGroupElement, q *PreCompute
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.yPlusX)
-	FeMul(&r.Y, &r.Y, &q.yMinusX)
-	FeMul(&r.T, &q.xy2d, &p.T)
+	FeMul(&r.Z, &r.X, &q.YPlusX)
+	FeMul(&r.Y, &r.Y, &q.YMinusX)
+	FeMul(&r.T, &q.XY2D, &p.T)
 	FeAdd(&t0, &p.Z, &p.Z)
 	FeSub(&r.X, &r.Z, &r.Y)
 	FeAdd(&r.Y, &r.Z, &r.Y)
@@ -848,9 +848,9 @@ func geMixedSub(r *CompletedGroupElement, p *ExtendedGroupElement, q *PreCompute
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.yMinusX)
-	FeMul(&r.Y, &r.Y, &q.yPlusX)
-	FeMul(&r.T, &q.xy2d, &p.T)
+	FeMul(&r.Z, &r.X, &q.YMinusX)
+	FeMul(&r.Y, &r.Y, &q.YPlusX)
+	FeMul(&r.T, &q.XY2D, &p.T)
 	FeAdd(&t0, &p.Z, &p.Z)
 	FeSub(&r.X, &r.Z, &r.Y)
 	FeAdd(&r.Y, &r.Z, &r.Y)
@@ -956,9 +956,9 @@ func negative(b int64) int64 {
 }
 
 func PreComputedGroupElementCMove(t, u *PreComputedGroupElement, b int64) {
-	FeCMove(&t.yPlusX, &u.yPlusX, b)
-	FeCMove(&t.yMinusX, &u.yMinusX, b)
-	FeCMove(&t.xy2d, &u.xy2d, b)
+	FeCMove(&t.YPlusX, &u.YPlusX, b)
+	FeCMove(&t.YMinusX, &u.YMinusX, b)
+	FeCMove(&t.XY2D, &u.XY2D, b)
 }
 
 func selectPoint(t *PreComputedGroupElement, pos int64, b int64) {
@@ -970,9 +970,9 @@ func selectPoint(t *PreComputedGroupElement, pos int64, b int64) {
 	for i := int64(0); i < 8; i++ {
 		PreComputedGroupElementCMove(t, &base[pos][i], equal(bAbs, i+1))
 	}
-	FeCopy(&minusT.yPlusX, &t.yMinusX)
-	FeCopy(&minusT.yMinusX, &t.yPlusX)
-	FeNeg(&minusT.xy2d, &t.xy2d)
+	FeCopy(&minusT.YPlusX, &t.YMinusX)
+	FeCopy(&minusT.YMinusX, &t.YPlusX)
+	FeNeg(&minusT.XY2D, &t.XY2D)
 	PreComputedGroupElementCMove(t, &minusT, bNegative)
 }
 
