@@ -691,6 +691,19 @@ func (p *ProjectiveGroupElement) ToBytes(s *[32]byte) {
 	s[31] ^= FeIsNegative(&x) << 7
 }
 
+func (p *ProjectiveGroupElement) ToExtended(r *ExtendedGroupElement) {
+	// Copy X, Y, Z
+	FeCopy(&r.X, &p.X)
+	FeCopy(&r.Y, &p.Y)
+	FeCopy(&r.Z, &p.Z)
+
+	// T = (X * Y) / Z
+	var XY, ZInv FieldElement
+	FeMul(&XY, &p.X, &p.Y)
+	FeInvert(&ZInv, &p.Z) // ZInv = 1/Z
+	FeMul(&r.T, &XY, &ZInv)
+}
+
 func (p *ExtendedGroupElement) Zero() {
 	FeZero(&p.X)
 	FeOne(&p.Y)
