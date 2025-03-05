@@ -654,11 +654,11 @@ type CompletedGroupElement struct {
 }
 
 type PreComputedGroupElement struct {
-	YPlusX, YMinusX, XY2D FieldElement
+	YplusX, YminusX, XY2D FieldElement
 }
 
 type CachedGroupElement struct {
-	yPlusX, yMinusX, Z, T2d FieldElement
+	YplusX, YminusX, Z, T2d FieldElement
 }
 
 func (p *ProjectiveGroupElement) Zero() {
@@ -705,8 +705,8 @@ func (p *ExtendedGroupElement) Double(r *CompletedGroupElement) {
 }
 
 func (p *ExtendedGroupElement) ToCached(r *CachedGroupElement) {
-	FeAdd(&r.yPlusX, &p.Y, &p.X)
-	FeSub(&r.yMinusX, &p.Y, &p.X)
+	FeAdd(&r.YplusX, &p.Y, &p.X)
+	FeSub(&r.YminusX, &p.Y, &p.X)
 	FeCopy(&r.Z, &p.Z)
 	FeMul(&r.T2d, &p.T, &d2)
 }
@@ -787,8 +787,8 @@ func (p *CompletedGroupElement) ToExtended(r *ExtendedGroupElement) {
 }
 
 func (p *PreComputedGroupElement) Zero() {
-	FeOne(&p.YPlusX)
-	FeOne(&p.YMinusX)
+	FeOne(&p.YplusX)
+	FeOne(&p.YminusX)
 	FeZero(&p.XY2D)
 }
 
@@ -797,8 +797,8 @@ func geAdd(r *CompletedGroupElement, p *ExtendedGroupElement, q *CachedGroupElem
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.yPlusX)
-	FeMul(&r.Y, &r.Y, &q.yMinusX)
+	FeMul(&r.Z, &r.X, &q.YplusX)
+	FeMul(&r.Y, &r.Y, &q.YminusX)
 	FeMul(&r.T, &q.T2d, &p.T)
 	FeMul(&r.X, &p.Z, &q.Z)
 	FeAdd(&t0, &r.X, &r.X)
@@ -817,8 +817,8 @@ func geSub(r *CompletedGroupElement, p *ExtendedGroupElement, q *CachedGroupElem
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.yMinusX)
-	FeMul(&r.Y, &r.Y, &q.yPlusX)
+	FeMul(&r.Z, &r.X, &q.YminusX)
+	FeMul(&r.Y, &r.Y, &q.YplusX)
 	FeMul(&r.T, &q.T2d, &p.T)
 	FeMul(&r.X, &p.Z, &q.Z)
 	FeAdd(&t0, &r.X, &r.X)
@@ -833,8 +833,8 @@ func geMixedAdd(r *CompletedGroupElement, p *ExtendedGroupElement, q *PreCompute
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.YPlusX)
-	FeMul(&r.Y, &r.Y, &q.YMinusX)
+	FeMul(&r.Z, &r.X, &q.YplusX)
+	FeMul(&r.Y, &r.Y, &q.YminusX)
 	FeMul(&r.T, &q.XY2D, &p.T)
 	FeAdd(&t0, &p.Z, &p.Z)
 	FeSub(&r.X, &r.Z, &r.Y)
@@ -848,8 +848,8 @@ func geMixedSub(r *CompletedGroupElement, p *ExtendedGroupElement, q *PreCompute
 
 	FeAdd(&r.X, &p.Y, &p.X)
 	FeSub(&r.Y, &p.Y, &p.X)
-	FeMul(&r.Z, &r.X, &q.YMinusX)
-	FeMul(&r.Y, &r.Y, &q.YPlusX)
+	FeMul(&r.Z, &r.X, &q.YminusX)
+	FeMul(&r.Y, &r.Y, &q.YplusX)
 	FeMul(&r.T, &q.XY2D, &p.T)
 	FeAdd(&t0, &p.Z, &p.Z)
 	FeSub(&r.X, &r.Z, &r.Y)
@@ -956,8 +956,8 @@ func negative(b int64) int64 {
 }
 
 func PreComputedGroupElementCMove(t, u *PreComputedGroupElement, b int64) {
-	FeCMove(&t.YPlusX, &u.YPlusX, b)
-	FeCMove(&t.YMinusX, &u.YMinusX, b)
+	FeCMove(&t.YplusX, &u.YplusX, b)
+	FeCMove(&t.YminusX, &u.YminusX, b)
 	FeCMove(&t.XY2D, &u.XY2D, b)
 }
 
@@ -970,8 +970,8 @@ func selectPoint(t *PreComputedGroupElement, pos int64, b int64) {
 	for i := int64(0); i < 8; i++ {
 		PreComputedGroupElementCMove(t, &base[pos][i], equal(bAbs, i+1))
 	}
-	FeCopy(&minusT.YPlusX, &t.YMinusX)
-	FeCopy(&minusT.YMinusX, &t.YPlusX)
+	FeCopy(&minusT.YplusX, &t.YminusX)
+	FeCopy(&minusT.YminusX, &t.YplusX)
 	FeNeg(&minusT.XY2D, &t.XY2D)
 	PreComputedGroupElementCMove(t, &minusT, bNegative)
 }
